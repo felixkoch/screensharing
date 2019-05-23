@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon server.js",
+    "node": "nodemon server.js",
+    "parcel": "parcel index.html",
+    "start": "npm run node & npm run parcel",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -18,5 +20,8 @@
   },
   "devDependencies": {
     "nodemon": "^1.19.0"
-  }
+  },
+  "browserslist": [
+    "since 2017-06"
+  ]
 }

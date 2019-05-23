@@ -29,10 +29,7 @@ io.on('connection', function (socket) {
 
   socket.on('getRouterRtpCapabilities', (data, callback) => {
     console.log('getRouterRtpCapabilities');
-    console.log(data)
-    console.log(callback)
-    callback('test')
-    //callback(mediasoupRouter.rtpCapabilities);
+    callback(mediasoupRouter.rtpCapabilities);
   });
 
 });
