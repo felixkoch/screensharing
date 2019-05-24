@@ -19,6 +19,7 @@
     "socket.io-client": "^2.2.0"
   },
   "devDependencies": {
+    "cssnano": "^4.1.10",
     "nodemon": "^1.19.0"
   },
   "browserslist": [

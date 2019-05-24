@@ -5,6 +5,9 @@ var app = express()
 const mediasoup = require('mediasoup');
 
 let mediasoupRouter;
+let producerTransport;
+let consumerTransport;
+
 (async () => {
   await runMediasoupWorker()
 })();
@@ -30,6 +33,14 @@ io.on('connection', function (socket) {
   socket.on('getRouterRtpCapabilities', (data, callback) => {
     console.log('getRouterRtpCapabilities');
     callback(mediasoupRouter.rtpCapabilities);
+  });
+
+  socket.on('createProducerTransport', async (data, callback) => {
+    console.log('createProducerTransport');
+    console.log(data)
+    const { transport, params } = await createWebRtcTransport();
+    producerTransport = transport;
+    callback(params);
   });
 
 });
@@ -81,4 +92,32 @@ async function runMediasoupWorker() {
     ];
   mediasoupRouter = await worker.createRouter({ mediaCodecs });
 
+}
+
+async function createWebRtcTransport()
+{
+  console.log('createWebRtcTransport');
+
+  const maxIncomingBitrate = 1500000;
+  const initialAvailableOutgoingBitrate = 1000000;
+
+  const transport = await mediasoupRouter.createWebRtcTransport({
+    listenIps: [{ip: '139.59.155.242', announcedIp: null}],
+    enableUdp: true,
+    enableTcp: true,
+    preferUdp: true,
+    initialAvailableOutgoingBitrate,
+  });
+
+  await transport.setMaxIncomingBitrate(maxIncomingBitrate);
+
+  return {
+    transport,
+    params: {
+      id: transport.id,
+      iceParameters: transport.iceParameters,
+      iceCandidates: transport.iceCandidates,
+      dtlsParameters: transport.dtlsParameters
+    },
+  };
 }

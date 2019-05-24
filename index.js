@@ -32,7 +32,40 @@ function loadDevice(routerRtpCapabilities) {
     console.log(device)
 }
 
-function publish()
-{
+function publish() {
     console.log('publish');
+
+    let transport;
+
+    socket.emit('createProducerTransport', {
+        forceTcp: false,
+        rtpCapabilities: device.rtpCapabilities,
+    }, onProducerTransport)
+
+}
+
+function onProducerTransport(data)
+{
+    console.log('onProducerTransport');
+    console.log(data);
+
+    const transport = device.createSendTransport(data)
+
+    transport.on('connect', () => console.log('connect'))
+    
+    transport.on('produce', () => console.log('produce'));
+
+    startWebcam(transport);
+}
+
+function startWebcam(transport)
+{
+    console.log('startWebcam')
+
+    const stream = navigator.mediaDevices.getUserMedia({ video: true });
+
+    console.log(stream);
+
+
+
 }
