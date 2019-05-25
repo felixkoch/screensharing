@@ -116,54 +116,80 @@ async function startWebcam(transport) {
     console.log('localVideo');
     console.log($('#localVideo'))
 
-    
+
     return stream;
 }
 
 async function subscribe() {
-    const data = await socket.request('createConsumerTransport', {
-      forceTcp: false,
-    });
+    socket.emit('createConsumerTransport', {
+        forceTcp: false,
+    }, onConsumerTransport);
 
-  }
+}
 
-function onConsumerTransport()
-{
+function onConsumerTransport(data) {
     console.log('onConsumerTransport');
 
-      
     const transport = device.createRecvTransport(data);
+
     transport.on('connect', ({ dtlsParameters }, callback, errback) => {
-      socket.request('connectConsumerTransport', {
-        transportId: transport.id,
-        dtlsParameters
-      })
-        .then(callback)
-        .catch(errback);
+        console.log('connect');
+        socket.emit('connectConsumerTransport', {
+            transportId: transport.id,
+            dtlsParameters
+        }, callback)
     });
-  
+
     transport.on('connectionstatechange', (state) => {
-      switch (state) {
-        case 'connecting':
-          txtSubscription.innerHTML = 'subscribing...';
-          btnSubscribe.disabled = true;
-          break;
-  
-        case 'connected':
-          document.querySelector('#remote_video').srcObject = stream;
-          txtSubscription.innerHTML = 'subscribed';
-          btnSubscribe.disabled = true;
-          break;
-  
-        case 'failed':
-          transport.close();
-          txtSubscription.innerHTML = 'failed';
-          btnSubscribe.disabled = false;
-          break;
-  
-        default: break;
-      }
+        console.log('connectionstatechange');
+        switch (state) {
+            case 'connecting':
+                console.log('connecting');
+                break;
+
+            case 'connected':
+                console.log('connected');
+                $('#remoteVideo').srcObject = stream;
+                break;
+
+            case 'failed':
+                console.log('failed');
+                transport.close();
+                break;
+
+            default: break;
+        }
     });
-  
+
     const stream = await consume(transport);
 }
+
+async function consume(transport) {
+    console.log('consume');
+    const { rtpCapabilities } = device;
+    const data = await new Promise((resolve, reject) => {
+        socket.emit('consume', { rtpCapabilities }, resolve)
+    })
+
+    const {
+        producerId,
+        id,
+        kind,
+        rtpParameters,
+    } = data;
+
+    let codecOptions = {};
+    const consumer = await transport.consume({
+        id,
+        producerId,
+        kind,
+        rtpParameters,
+        codecOptions,
+    });
+
+    const stream = new MediaStream();
+    stream.addTrack(consumer.track);
+    return stream;
+}
+
+
