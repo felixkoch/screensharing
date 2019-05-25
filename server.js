@@ -43,6 +43,22 @@ io.on('connection', function (socket) {
     callback(params);
   });
 
+  socket.on('connectProducerTransport', async (data, callback) => {
+    console.log('connectProducerTransport');
+    await producerTransport.connect({ dtlsParameters: data.dtlsParameters });
+    callback();
+  });
+
+  socket.on('produce', async (data, callback) => {
+    console.log('produce');
+    const {kind, rtpParameters} = data;
+    producer = await producerTransport.produce({ kind, rtpParameters });
+    callback({ id: producer.id });
+
+    // inform clients about new producer
+    socket.broadcast.emit('newProducer');
+  });
+
 });
 
 
