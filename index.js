@@ -107,7 +107,10 @@ async function onProducerTransport(data) {
 async function startWebcam(transport) {
     console.log('startWebcam')
 
-    let stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    //let stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    let stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+      });
 
     console.log(stream);
     const track = stream.getVideoTracks()[0];
@@ -121,13 +124,14 @@ async function startWebcam(transport) {
 }
 
 async function subscribe() {
+    console.log('subscribe');
     socket.emit('createConsumerTransport', {
         forceTcp: false,
     }, onConsumerTransport);
 
 }
 
-function onConsumerTransport(data) {
+async function onConsumerTransport(data) {
     console.log('onConsumerTransport');
 
     const transport = device.createRecvTransport(data);

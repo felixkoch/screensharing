@@ -59,6 +59,24 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('newProducer');
   });
 
+  socket.on('createConsumerTransport', async (data, callback) => {
+    console.log('createConsumerTransport');
+    const { transport, params } = await createWebRtcTransport();
+    consumerTransport = transport;
+    callback(params);
+  });
+
+  socket.on('connectConsumerTransport', async (data, callback) => {
+    console.log('connectConsumerTransport')
+    await consumerTransport.connect({ dtlsParameters: data.dtlsParameters });
+    callback();
+  });
+
+  socket.on('consume', async (data, callback) => {
+    console.log('consume');
+    callback(await createConsumer(producer, data.rtpCapabilities));
+  });
+
 });
 
 
@@ -135,5 +153,37 @@ async function createWebRtcTransport()
       iceCandidates: transport.iceCandidates,
       dtlsParameters: transport.dtlsParameters
     },
+  };
+}
+
+async function createConsumer(producer, rtpCapabilities) {
+  console.log('createConsumer');
+  if (!mediasoupRouter.canConsume(
+    {
+      producerId: producer.id,
+      rtpCapabilities,
+    })
+  ) {
+    console.error('can not consume');
+    return;
+  }
+  try {
+    consumer = await consumerTransport.consume({
+      producerId: producer.id,
+      rtpCapabilities,
+      paused: false,
+    });
+  } catch (error) {
+    console.error('consume failed', error);
+    return;
+  }
+
+  return {
+    producerId: producer.id,
+    id: consumer.id,
+    kind: consumer.kind,
+    rtpParameters: consumer.rtpParameters,
+    type: consumer.type,
+    producerPaused: consumer.producerPaused
   };
 }
