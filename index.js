@@ -1,3 +1,5 @@
+import 'babel-polyfill'
+import adapter from 'webrtc-adapter';
 import mediasoup from 'mediasoup-client';
 import io from 'socket.io-client';
 
