@@ -7,7 +7,9 @@
     "node": "nodemon server.js",
     "parcel": "parcel index.html",
     "start": "npm run node & npm run parcel",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack-dev-server --mode development",
+    "build": "webpack --mode production"
   },
   "author": "",
   "license": "ISC",
@@ -21,8 +23,15 @@
     "webrtc-adapter": "^7.2.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "babel-loader": "^8.0.6",
     "cssnano": "^4.1.10",
-    "nodemon": "^1.19.0"
+    "html-webpack-plugin": "^3.2.0",
+    "nodemon": "^1.19.0",
+    "webpack": "^4.32.2",
+    "webpack-cli": "^3.3.2",
+    "webpack-dev-server": "^3.4.1"
   },
   "browserslist": [
     "> 1%"

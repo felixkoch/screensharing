@@ -1,6 +1,7 @@
 import 'babel-polyfill'
 import adapter from 'webrtc-adapter';
-import mediasoup from 'mediasoup-client';
+//import mediasoup from 'mediasoup-client';
+const mediasoup = require('mediasoup-client');
 import io from 'socket.io-client';
 
 const $ = document.querySelector.bind(document);
@@ -112,7 +113,7 @@ async function startWebcam(transport) {
     //let stream = await navigator.mediaDevices.getUserMedia({ video: true });
     let stream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
-      });
+    });
 
     console.log(stream);
     const track = stream.getVideoTracks()[0];
@@ -140,10 +141,17 @@ async function onConsumerTransport(data) {
 
     transport.on('connect', ({ dtlsParameters }, callback, errback) => {
         console.log('connect');
-        socket.emit('connectConsumerTransport', {
-            transportId: transport.id,
-            dtlsParameters
-        }, callback)
+        try {
+            socket.emit('connectConsumerTransport', {
+                transportId: transport.id,
+                dtlsParameters
+            }, callback)
+        }
+        catch (e) {
+            console.log('error');
+            console.log(e)
+            errback(e);
+        }
     });
 
     transport.on('connectionstatechange', (state) => {
@@ -155,7 +163,9 @@ async function onConsumerTransport(data) {
 
             case 'connected':
                 console.log('connected');
-                $('#remoteVideo').srcObject = stream;
+                console.log(1);
+                document.getElementById('remoteVideo').srcObject = stream;
+                console.log(2);
                 break;
 
             case 'failed':
