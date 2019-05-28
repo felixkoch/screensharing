@@ -177,13 +177,13 @@ async function onConsumerTransport(data) {
         }
     });
 
-    try {
+    //try {
         const stream = await consume(transport);
-    }
-    catch (err) {
-        console.log('err in consume');
-        console.log(err);
-    }
+    //}
+    //catch (err) {
+        //console.log('err in consume');
+        //console.log(err);
+    //}
 }
 
 async function consume(transport) {
@@ -200,10 +200,12 @@ async function consume(transport) {
         rtpParameters,
     } = data;
 
-    const consumer;
-    try {
+
         let codecOptions = {};
-        consumer = await transport.consume({
+        let consumer;
+
+    try {
+    consumer = await transport.consume({
             id,
             producerId,
             kind,
@@ -211,7 +213,7 @@ async function consume(transport) {
             codecOptions,
         });
     }
-    catch(err)
+    catch (err)
     {
         console.log('err in transport consume');
         console.log(err);
