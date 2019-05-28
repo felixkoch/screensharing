@@ -177,7 +177,13 @@ async function onConsumerTransport(data) {
         }
     });
 
-    const stream = await consume(transport);
+    try {
+        const stream = await consume(transport);
+    }
+    catch (err) {
+        console.log('err in consume');
+        console.log(err);
+    }
 }
 
 async function consume(transport) {
@@ -194,15 +200,22 @@ async function consume(transport) {
         rtpParameters,
     } = data;
 
-    let codecOptions = {};
-    const consumer = await transport.consume({
-        id,
-        producerId,
-        kind,
-        rtpParameters,
-        codecOptions,
-    });
-
+    const consumer;
+    try {
+        let codecOptions = {};
+        consumer = await transport.consume({
+            id,
+            producerId,
+            kind,
+            rtpParameters,
+            codecOptions,
+        });
+    }
+    catch(err)
+    {
+        console.log('err in transport consume');
+        console.log(err);
+    }
     const stream = new MediaStream();
     stream.addTrack(consumer.track);
     return stream;
