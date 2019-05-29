@@ -1,7 +1,7 @@
 import 'babel-polyfill'
-import adapter from 'webrtc-adapter';
-//import mediasoup from 'mediasoup-client';
-const mediasoup = require('mediasoup-client');
+//import adapter from 'webrtc-adapter';
+import mediasoup from 'mediasoup-client';
+//const mediasoup = require('mediasoup-client');
 import io from 'socket.io-client';
 
 const $ = document.querySelector.bind(document);
@@ -31,10 +31,11 @@ function loadDevice(routerRtpCapabilities) {
     } catch (error) {
         if (error.name === 'UnsupportedError') {
             console.error('browser not supported');
+            console.log(error);
         }
     }
     device.load({ routerRtpCapabilities });
-    console.log(device)
+    //console.log(device)
 }
 
 function publish() {
@@ -178,20 +179,31 @@ async function onConsumerTransport(data) {
     });
 
     //try {
-        const stream = await consume(transport);
+    const stream = await consume(transport);
     //}
     //catch (err) {
-        //console.log('err in consume');
-        //console.log(err);
+    //console.log('err in consume');
+    //console.log(err);
     //}
 }
 
 async function consume(transport) {
     console.log('consume');
     const { rtpCapabilities } = device;
-    const data = await new Promise((resolve, reject) => {
-        socket.emit('consume', { rtpCapabilities }, resolve)
-    })
+
+    let data;
+    try {
+        data = await new Promise((resolve, reject) => {
+            socket.emit('consume', { rtpCapabilities }, resolve)
+        })
+    }
+    catch(err)
+    {
+        console.log('err in emit consume');
+        console.log(err)
+    }
+
+    console.log(data);
 
     const {
         producerId,
@@ -201,11 +213,11 @@ async function consume(transport) {
     } = data;
 
 
-        let codecOptions = {};
-        let consumer;
+    let codecOptions = {};
+    let consumer;
 
     try {
-    consumer = await transport.consume({
+        consumer = await transport.consume({
             id,
             producerId,
             kind,
@@ -213,10 +225,10 @@ async function consume(transport) {
             codecOptions,
         });
     }
-    catch (err)
-    {
+    catch (err) {
         console.log('err in transport consume');
         console.log(err);
+        console.log(err.stack);
     }
     const stream = new MediaStream();
     stream.addTrack(consumer.track);
