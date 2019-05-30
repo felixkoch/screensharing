@@ -2,6 +2,8 @@ import 'babel-polyfill'
 //import adapter from 'webrtc-adapter';
 import mediasoup from 'mediasoup-client';
 //const mediasoup = require('mediasoup-client');
+import Edge11 from 'mediasoup-client/lib/handlers/Edge11'
+import Firefox60 from 'mediasoup-client/lib/handlers/Firefox60'
 import io from 'socket.io-client';
 
 const $ = document.querySelector.bind(document);
@@ -32,7 +34,9 @@ function loadDevice(routerRtpCapabilities) {
         if (error.name === 'UnsupportedError') {
             console.error('browser not supported');
             console.log(error);
+            console.log('EDGE');
         }
+        console.log('EDGE');
     }
     device.load({ routerRtpCapabilities });
     //console.log(device)
@@ -112,7 +116,8 @@ async function startWebcam(transport) {
     console.log('startWebcam')
 
     //let stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    let stream = await navigator.mediaDevices.getDisplayMedia({
+    //let stream = await navigator.mediaDevices.getDisplayMedia({
+    let stream = navigator.mediaDevices.getUserMedia({
         video: true,
     });
 
