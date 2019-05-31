@@ -117,7 +117,7 @@ async function startWebcam(transport) {
 
     //let stream = await navigator.mediaDevices.getUserMedia({ video: true });
     //let stream = await navigator.mediaDevices.getDisplayMedia({
-    let stream = navigator.mediaDevices.getUserMedia({
+    let stream = await navigator.mediaDevices.getUserMedia({
         video: true,
     });
 
