@@ -6,6 +6,7 @@ import Edge11 from 'mediasoup-client/lib/handlers/Edge11'
 import Firefox60 from 'mediasoup-client/lib/handlers/Firefox60'
 import io from 'socket.io-client';
 
+
 const $ = document.querySelector.bind(document);
 
 $('#publish').addEventListener('click', publish);
