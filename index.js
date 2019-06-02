@@ -6,6 +6,12 @@ import Edge11 from 'mediasoup-client/lib/handlers/Edge11'
 import Firefox60 from 'mediasoup-client/lib/handlers/Firefox60'
 import io from 'socket.io-client';
 
+const Edge = require('./Edge');
+
+console.log(Edge);
+const testDevice = new mediasoup.Device({Handler: Edge});
+console.log(testDevice);
+
 
 const $ = document.querySelector.bind(document);
 
