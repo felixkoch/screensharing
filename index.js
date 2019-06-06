@@ -8,11 +8,6 @@ import io from 'socket.io-client';
 
 const Edge = require('./Edge');
 
-console.log(Edge);
-const testDevice = new mediasoup.Device({Handler: Edge});
-console.log(testDevice);
-
-
 const $ = document.querySelector.bind(document);
 
 $('#publish').addEventListener('click', publish);
@@ -42,6 +37,13 @@ function loadDevice(routerRtpCapabilities) {
             console.error('browser not supported');
             console.log(error);
             console.log('EDGE');
+
+            try {
+                device = new mediasoup.Device({Handler: Edge});
+            }
+            catch(error){
+                console.log('Edge konnte nicht geladen werden');
+            }
         }
         console.log('EDGE');
     }
