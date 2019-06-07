@@ -1,5 +1,5 @@
 const sdpTransform = require('sdp-transform');
-
+const sdpCommonUtils = require('mediasoup-client/lib/handlers/sdp/commonUtils');
 class Edge {
 
     constructor()
