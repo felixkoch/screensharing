@@ -1,13 +1,18 @@
 <html>
-    <head>
-            
-    </head>
-        
-    <body>
-        <div><button id="publish">Publish</button></div>
-        <div><button id="subscribe">Subscribe</button></div>
-        <div><video id="localVideo" controls autoplay playsinline style="max-width:400px"></video></div>
-        <div><video id="remoteVideo" controls autoplay playsinline style="max-width:400px"></video></div>
-        <script src='index.js'></script>
-    </body>
+
+<head>
+    <script>
+        window.localStorage.setItem('debug', 'mediasoup-client:WARN* mediasoup-client:ERROR* mediasoup-client:*');
+    </script>
+
+</head>
+
+<body>
+    <div><button id="publish">Publish</button></div>
+    <div><button id="subscribe">Subscribe</button></div>
+    <div><video id="localVideo" controls autoplay playsinline style="max-width:400px"></video></div>
+    <div><video id="remoteVideo" controls autoplay playsinline style="max-width:400px"></video></div>
+    <script src='index.js'></script>
+</body>
+
 </html>

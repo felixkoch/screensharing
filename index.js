@@ -154,6 +154,8 @@ async function onConsumerTransport(data) {
 
     const transport = device.createRecvTransport(data);
 
+    console.log(transport);
+
     transport.on('connect', ({ dtlsParameters }, callback, errback) => {
         console.log('connect');
         try {
