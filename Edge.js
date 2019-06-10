@@ -19,14 +19,72 @@ class Handler extends EnhancedEventEmitter
 	)
 	{
 		super(logger);
+		logger.debug('Handler constructor()');
 	}
+
+	close()
+	{
+		logger.debug('close()');
+	}
+
+	async getTransportStats()
+	{
+		logger.debug('getTransportStats()');
+	}
+
+	async updateIceServers({ iceServers })
+	{
+		logger.debug('updateIceServers()');
+	}
+
+	async _setupTransport({ localDtlsRole, localSdpObject = null })
+	{
+		logger.debug('_setupTransport()');
+	}
+
 }
 
 class SendHandler extends Handler
 {
 	constructor(data)
 	{
+		logger.debug('SendHandler constructor()')
 		super(data);
+	}
+
+	async send({ track, encodings, codecOptions })
+	{
+		logger.debug('send() [kind:%s, track.id:%s]', track.kind, track.id);
+	}
+
+	async stopSending({ localId })
+	{
+		logger.debug('stopSending() [localId:%s]', localId);
+
+	}
+
+	async replaceTrack({ localId, track }) // eslint-disable-line no-unused-vars
+	{
+		logger.debug('replaceTrack')
+		throw new UnsupportedError('not implemented');
+	}
+
+	// eslint-disable-next-line no-unused-vars
+	async setMaxSpatialLayer({ localId, spatialLayer })
+	{
+		logger.debug('setMaxSpatialLayer')
+		throw new UnsupportedError('not supported');
+	}
+
+	async getSenderStats({ localId }) // eslint-disable-line no-unused-vars
+	{
+		logger.debug('getSenderStats')
+		throw new UnsupportedError('not implemented');
+	}
+
+	async restartIce({ iceParameters })
+	{
+		logger.debug('restartIce()');
 	}
 }
 
@@ -34,8 +92,30 @@ class RecvHandler extends Handler
 {
 	constructor(data)
 	{
+		logger.debug('RecvHandler constructor()')
 		super(data);
+	
+	}
 
+	async receive({ id, kind, rtpParameters })
+	{
+		logger.debug('receive() [id:%s, kind:%s]', id, kind);
+	}
+
+	async stopReceiving({ localId })
+	{
+		logger.debug('stopReceiving() [localId:%s]', localId);
+
+	}
+
+	async getReceiverStats({ localId }) // eslint-disable-line no-unused-vars
+	{
+		logger.debug('getReceiverStats()');
+	}
+	
+	async restartIce({ iceParameters })
+	{
+		logger.debug('restartIce()');
 	}
 }
 
