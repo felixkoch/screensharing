@@ -18,8 +18,58 @@ class Handler extends EnhancedEventEmitter
 		}
 	)
 	{
-		super(logger);
 		logger.debug('Handler constructor()');
+		super(logger);
+
+		// Got transport local and remote parameters.
+		// @type {Boolean}
+		this._transportReady = false;
+
+		// Remote SDP handler.
+		// @type {RemoteSdp}
+		this._remoteSdp = new RemoteSdp(
+			{
+				iceParameters,
+				iceCandidates,
+				dtlsParameters,
+				planB : true
+			});
+
+		// RTCPeerConnection instance.
+		// @type {RTCPeerConnection}
+		this._pc = new RTCPeerConnection(
+			{
+				iceServers         : iceServers || [],
+				iceTransportPolicy : iceTransportPolicy || 'all',
+				bundlePolicy       : 'max-bundle',
+				rtcpMuxPolicy      : 'require',
+				sdpSemantics       : 'plan-b'
+			},
+			proprietaryConstraints);
+
+		// Handle RTCPeerConnection connection status.
+		this._pc.addEventListener('iceconnectionstatechange', () =>
+		{
+			switch (this._pc.iceConnectionState)
+			{
+				case 'checking':
+					this.emit('@connectionstatechange', 'connecting');
+					break;
+				case 'connected':
+				case 'completed':
+					this.emit('@connectionstatechange', 'connected');
+					break;
+				case 'failed':
+					this.emit('@connectionstatechange', 'failed');
+					break;
+				case 'disconnected':
+					this.emit('@connectionstatechange', 'disconnected');
+					break;
+				case 'closed':
+					this.emit('@connectionstatechange', 'closed');
+					break;
+			}
+		});
 	}
 
 	close()
@@ -94,6 +144,11 @@ class RecvHandler extends Handler
 	{
 		logger.debug('RecvHandler constructor()')
 		super(data);
+
+		// Map of MID, RTP parameters and RTCRtpReceiver indexed by local id.
+		// Value is an Object with mid and rtpParameters.
+		// @type {Map<String, Object>}
+		this._mapIdRtpParameters = new Map();
 	
 	}
 
