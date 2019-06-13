@@ -4,6 +4,8 @@ const Logger = require('mediasoup-client/lib/Logger');
 const EnhancedEventEmitter = require('mediasoup-client/lib/EnhancedEventEmitter');
 const RemoteSdp = require('mediasoup-client/lib/handlers/sdp/RemoteSdp');
 const ortc = require('mediasoup-client/lib/ortc');
+const utils = require('mediasoup-client/lib/utils');
+const sdpPlanBUtils = require('mediasoup-client/lib/handlers/sdp/planBUtils');
 
 const logger = new Logger('Edge');
 
@@ -140,22 +142,23 @@ class SendHandler extends Handler
 		logger.debug('send() [kind:%s, track.id:%s]', track.kind, track.id);
 
 
-		if (!track.streamReactTag)
-			throw new Error('missing track.streamReactTag property');
+		//if (!track.streamReactTag)
+		//	throw new Error('missing track.streamReactTag property');
 
 		// Hack: Create a new stream with track.streamReactTag as id.
-		const stream = new MediaStream(track.streamReactTag);
-		
-
+		//const stream = new MediaStream(track.streamReactTag);
+		logger.debug('send(0)')
+		const stream = new MediaStream();//track.id
+		logger.debug('send(1)')
 		stream.addTrack(track);
 		this._pc.addStream(stream);
-
+		logger.debug('send(2)')
 		let offer = await this._pc.createOffer();
 		let localSdpObject = sdpTransform.parse(offer.sdp);
 		let offerMediaObject;
 		const sendingRtpParameters =
 			utils.clone(this._sendingRtpParametersByKind[track.kind]);
-
+		logger.debug('send(3)')
 		if (!this._transportReady)
 			await this._setupTransport({ localDtlsRole: 'server', localSdpObject });
 
