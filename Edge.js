@@ -3,6 +3,7 @@ const sdpCommonUtils = require('mediasoup-client/lib/handlers/sdp/commonUtils');
 const Logger = require('mediasoup-client/lib/Logger');
 const EnhancedEventEmitter = require('mediasoup-client/lib/EnhancedEventEmitter');
 const RemoteSdp = require('mediasoup-client/lib/handlers/sdp/RemoteSdp');
+const ortc = require('mediasoup-client/lib/ortc');
 
 const logger = new Logger('Edge');
 
@@ -119,11 +120,120 @@ class SendHandler extends Handler
 	{
 		logger.debug('SendHandler constructor()')
 		super(data);
+
+		// Generic sending RTP parameters for audio and video.
+		// @type {RTCRtpParameters}
+		this._sendingRtpParametersByKind = data.sendingRtpParametersByKind;
+
+		// Generic sending RTP parameters for audio and video suitable for the SDP
+		// remote answer.
+		// @type {RTCRtpParameters}
+		this._sendingRemoteRtpParametersByKind = data.sendingRemoteRtpParametersByKind;
+
+		// Map of MediaStreamTracks indexed by localId.
+		// @type {Map<Number, MediaStreamTracks>}
+		this._mapIdTrack = new Map();
 	}
 
 	async send({ track, encodings, codecOptions })
 	{
 		logger.debug('send() [kind:%s, track.id:%s]', track.kind, track.id);
+
+
+		if (!track.streamReactTag)
+			throw new Error('missing track.streamReactTag property');
+
+		// Hack: Create a new stream with track.streamReactTag as id.
+		const stream = new MediaStream(track.streamReactTag);
+		
+
+		stream.addTrack(track);
+		this._pc.addStream(stream);
+
+		let offer = await this._pc.createOffer();
+		let localSdpObject = sdpTransform.parse(offer.sdp);
+		let offerMediaObject;
+		const sendingRtpParameters =
+			utils.clone(this._sendingRtpParametersByKind[track.kind]);
+
+		if (!this._transportReady)
+			await this._setupTransport({ localDtlsRole: 'server', localSdpObject });
+
+		if (track.kind === 'video' && encodings && encodings.length > 1)
+		{
+			logger.debug('send() | enabling simulcast');
+
+			localSdpObject = sdpTransform.parse(offer.sdp);
+			offerMediaObject = localSdpObject.media
+				.find((m) => m.type === 'video');
+
+			sdpPlanBUtils.addLegacySimulcast(
+				{
+					offerMediaObject,
+					track,
+					numStreams : encodings.length
+				});
+
+			offer = { type: 'offer', sdp: sdpTransform.write(localSdpObject) };
+		}
+
+		logger.debug(
+			'send() | calling pc.setLocalDescription() [offer:%o]', offer);
+
+		const offerDesc = new RTCSessionDescription(offer);
+
+		await this._pc.setLocalDescription(offerDesc);
+
+		localSdpObject = sdpTransform.parse(this._pc.localDescription.sdp);
+		offerMediaObject = localSdpObject.media[localSdpObject.media.length - 1];
+
+		// Set RTCP CNAME.
+		sendingRtpParameters.rtcp.cname =
+			sdpCommonUtils.getCname({ offerMediaObject });
+
+		// Set RTP encodings.
+		sendingRtpParameters.encodings =
+			sdpPlanBUtils.getRtpEncodings({ offerMediaObject, track });
+
+		// If VP8 or H264 and there is effective simulcast, add scalabilityMode to
+		// each encoding.
+		if (
+			sendingRtpParameters.encodings.length > 1 &&
+			(
+				sendingRtpParameters.codecs[0].mimeType.toLowerCase() === 'video/vp8' ||
+				sendingRtpParameters.codecs[0].mimeType.toLowerCase() === 'video/h264'
+			)
+		)
+		{
+			for (const encoding of sendingRtpParameters.encodings)
+			{
+				encoding.scalabilityMode = 'S1T3';
+			}
+		}
+
+		this._remoteSdp.send(
+			{
+				offerMediaObject,
+				offerRtpParameters  : sendingRtpParameters,
+				answerRtpParameters : this._sendingRemoteRtpParametersByKind[track.kind],
+				codecOptions
+			});
+
+		const answer = { type: 'answer', sdp: this._remoteSdp.getSdp() };
+
+		logger.debug(
+			'send() | calling pc.setRemoteDescription() [answer:%o]', answer);
+
+		const answerDesc = new RTCSessionDescription(answer);
+
+		await this._pc.setRemoteDescription(answerDesc);
+
+		const localId = this._mapIdTrack.size + 1;
+
+		// Insert into the map.
+		this._mapIdTrack.set(localId, track);
+
+		return { localId, rtpParameters: sendingRtpParameters };
 	}
 
 	async stopSending({ localId })
