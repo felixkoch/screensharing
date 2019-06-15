@@ -13,10 +13,16 @@ const $ = document.querySelector.bind(document);
 $('#publish').addEventListener('click', publish);
 $('#subscribe').addEventListener('click', subscribe);
 
+if (!location.hash) {
+    location.hash = Math.floor(Math.random() * 0xFFFFFF).toString(16);
+}
+const room = location.hash.substring(1);
+
+
 const socket = io('https://139.59.155.242');
 let device;
 let producer;
-
+let clientId = null;
 socket.on('connect', () => {
     console.log('connect')
 
@@ -25,6 +31,7 @@ socket.on('connect', () => {
 
     socket.emit('getRouterRtpCapabilities', null, loadDevice)
     console.log('nachemit');
+    clientId = socket.id;
 });
 
 function loadDevice(routerRtpCapabilities) {
@@ -39,9 +46,9 @@ function loadDevice(routerRtpCapabilities) {
             console.log('EDGE');
 
             try {
-                device = new mediasoup.Device({Handler: Edge});
+                device = new mediasoup.Device({ Handler: Edge });
             }
-            catch(error){
+            catch (error) {
                 console.log('Edge konnte nicht geladen werden');
             }
         }
@@ -213,8 +220,7 @@ async function consume(transport) {
             socket.emit('consume', { rtpCapabilities }, resolve)
         })
     }
-    catch(err)
-    {
+    catch (err) {
         console.log('err in emit consume');
         console.log(err)
     }
