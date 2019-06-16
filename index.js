@@ -29,9 +29,17 @@ socket.on('connect', () => {
     //const data = await socket.request('getRouterRtpCapabilities');
     // await loadDevice(data);
 
+    clientId = socket.id;
+    socket.emit('JOIN', room);
+
     socket.emit('getRouterRtpCapabilities', null, loadDevice)
     console.log('nachemit');
-    clientId = socket.id;
+    
+});
+
+socket.on('MEMBERS', (data) => {
+    console.log("MEMBERS");
+    console.log(data);
 });
 
 function loadDevice(routerRtpCapabilities) {

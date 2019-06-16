@@ -27,8 +27,29 @@ var server = https.createServer({
 
 var io = require('socket.io').listen(server);
 
+let roomMembers = {};
+
 io.on('connection', function (socket) {
   console.log('a user connected');
+
+
+  socket.on('JOIN', (data) => {
+    console.log(`JOIN: ${socket.id} joins ${data}`);
+    socket.join(data);
+
+    //socketRoomMap[socket.id] = data;
+    if(typeof roomMembers[data] == 'undefined')
+    {
+      roomMembers[data] = [];
+    }
+    
+    roomMembers[data].push(socket.id);
+
+    //socket.emit('MEMBERS', roomMembers[data]);
+    io.to(data).emit('MEMBERS', roomMembers[data]);
+  });
+
+  
 
   socket.on('getRouterRtpCapabilities', (data, callback) => {
     console.log('getRouterRtpCapabilities');
