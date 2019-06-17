@@ -28,6 +28,8 @@ var server = https.createServer({
 var io = require('socket.io').listen(server);
 
 let roomMembers = {};
+let roomOf = {};
+let producerTransports = {};
 
 io.on('connection', function (socket) {
   console.log('a user connected');
@@ -44,6 +46,7 @@ io.on('connection', function (socket) {
     }
     
     roomMembers[data].push(socket.id);
+    roomOf[socket.id] = data
 
     //socket.emit('MEMBERS', roomMembers[data]);
     io.to(data).emit('MEMBERS', roomMembers[data]);
@@ -57,27 +60,28 @@ io.on('connection', function (socket) {
   });
 
   socket.on('createProducerTransport', async (data, callback) => {
-    console.log('createProducerTransport');
+    console.log('createProducerTransport '+socket.id);
     console.log(data)
     const { transport, params } = await createWebRtcTransport();
-    producerTransport = transport;
+    producerTransports[socket.id] = transport;
     callback(params);
   });
 
   socket.on('connectProducerTransport', async (data, callback) => {
-    console.log('connectProducerTransport');
-    await producerTransport.connect({ dtlsParameters: data.dtlsParameters });
+    console.log('connectProducerTransport '+socket.id);
+    await producerTransports[socket.id].connect({ dtlsParameters: data.dtlsParameters });
     callback();
   });
 
   socket.on('produce', async (data, callback) => {
-    console.log('produce');
+    console.log('produce '+socket.id);
     const {kind, rtpParameters} = data;
-    producer = await producerTransport.produce({ kind, rtpParameters });
+    producer = await producerTransports[socket.id].produce({ kind, rtpParameters });
     callback({ id: producer.id });
 
     // inform clients about new producer
-    socket.broadcast.emit('newProducer');
+    //socket.broadcast.emit('newProducer');
+    io.to(roomOf[socket.id]).emit('NEWPRODUCER', socket.id);
   });
 
   socket.on('createConsumerTransport', async (data, callback) => {

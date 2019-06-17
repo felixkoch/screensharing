@@ -22,14 +22,13 @@ const room = location.hash.substring(1);
 const socket = io('https://139.59.155.242');
 let device;
 let producer;
-let clientId = null;
+
 socket.on('connect', () => {
     console.log('connect')
 
     //const data = await socket.request('getRouterRtpCapabilities');
     // await loadDevice(data);
 
-    clientId = socket.id;
     socket.emit('JOIN', room);
 
     socket.emit('getRouterRtpCapabilities', null, loadDevice)
@@ -39,6 +38,11 @@ socket.on('connect', () => {
 
 socket.on('MEMBERS', (data) => {
     console.log("MEMBERS");
+    console.log(data);
+});
+
+socket.on('NEWPRODUCER', (data) => {
+    console.log("NEWPRODUCER");
     console.log(data);
 });
 
@@ -83,9 +87,6 @@ async function onProducerTransport(data) {
     console.log(data);
 
     const transport = device.createSendTransport(data)
-
-
-
 
     transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
         console.log('connect')
