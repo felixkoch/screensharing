@@ -29,7 +29,9 @@ var io = require('socket.io').listen(server);
 
 let roomMembers = {};
 let roomOf = {};
+let producers = {};
 let producerTransports = {};
+let consumerTransports = {};
 
 io.on('connection', function (socket) {
   console.log('a user connected');
@@ -76,8 +78,8 @@ io.on('connection', function (socket) {
   socket.on('produce', async (data, callback) => {
     console.log('produce '+socket.id);
     const {kind, rtpParameters} = data;
-    producer = await producerTransports[socket.id].produce({ kind, rtpParameters });
-    callback({ id: producer.id });
+    producers[socket.id] = await producerTransports[socket.id].produce({ kind, rtpParameters });
+    callback({ id: producers[socket.id].id });
 
     // inform clients about new producer
     //socket.broadcast.emit('newProducer');
@@ -85,21 +87,28 @@ io.on('connection', function (socket) {
   });
 
   socket.on('createConsumerTransport', async (data, callback) => {
-    console.log('createConsumerTransport');
+    console.log('createConsumerTransport for '+data.producerSocketId);
     const { transport, params } = await createWebRtcTransport();
-    consumerTransport = transport;
+
+    if(typeof consumerTransports[socket.id] == 'undefined')
+    {
+      consumerTransports[socket.id] = {}
+    }
+
+    consumerTransports[socket.id][data.producerSocketId] = transport;
+    params.producerSocketId = data.producerSocketId;
     callback(params);
   });
 
   socket.on('connectConsumerTransport', async (data, callback) => {
     console.log('connectConsumerTransport')
-    await consumerTransport.connect({ dtlsParameters: data.dtlsParameters });
+    await consumerTransports[socket.id][data.producerSocketId].connect({ dtlsParameters: data.dtlsParameters });
     callback();
   });
 
   socket.on('consume', async (data, callback) => {
-    console.log('consume');
-    callback(await createConsumer(producer, data.rtpCapabilities));
+    console.log('consume for '+data.producerSocketId);
+    callback(await createConsumer(producers[data.producerSocketId], data.rtpCapabilities, socket.id, data.producerSocketId));
   });
 
 });
@@ -194,7 +203,7 @@ async function createWebRtcTransport()
   };
 }
 
-async function createConsumer(producer, rtpCapabilities) {
+async function createConsumer(producer, rtpCapabilities, consumerSocketId, producerSocketId) {
   console.log('createConsumer');
   if (!mediasoupRouter.canConsume(
     {
@@ -206,7 +215,7 @@ async function createConsumer(producer, rtpCapabilities) {
     return;
   }
   try {
-    consumer = await consumerTransport.consume({
+    consumer = await consumerTransports[consumerSocketId][producerSocketId].consume({
       producerId: producer.id,
       rtpCapabilities,
       paused: false,

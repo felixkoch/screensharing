@@ -41,9 +41,11 @@ socket.on('MEMBERS', (data) => {
     console.log(data);
 });
 
+let producerSocketId = null;
 socket.on('NEWPRODUCER', (data) => {
     console.log("NEWPRODUCER");
     console.log(data);
+    producerSocketId = data;
 });
 
 function loadDevice(routerRtpCapabilities) {
@@ -158,15 +160,17 @@ async function startWebcam(transport) {
 }
 
 async function subscribe() {
-    console.log('subscribe');
+    console.log('subscribe for '+producerSocketId);
     socket.emit('createConsumerTransport', {
         forceTcp: false,
+        producerSocketId
     }, onConsumerTransport);
 
 }
 
 async function onConsumerTransport(data) {
-    console.log('onConsumerTransport');
+    console.log('onConsumerTransport for producerSocketId '+data.producerSocketId);
+    const producerSocketId = data.producerSocketId
 
     const transport = device.createRecvTransport(data);
 
@@ -177,7 +181,8 @@ async function onConsumerTransport(data) {
         try {
             socket.emit('connectConsumerTransport', {
                 transportId: transport.id,
-                dtlsParameters
+                dtlsParameters,
+                producerSocketId
             }, callback)
         }
         catch (e) {
@@ -211,7 +216,7 @@ async function onConsumerTransport(data) {
     });
 
     //try {
-    const stream = await consume(transport);
+    const stream = await consume(transport, producerSocketId);
     //}
     //catch (err) {
     //console.log('err in consume');
@@ -219,14 +224,14 @@ async function onConsumerTransport(data) {
     //}
 }
 
-async function consume(transport) {
+async function consume(transport, producerSocketId) {
     console.log('consume');
     const { rtpCapabilities } = device;
 
     let data;
     try {
         data = await new Promise((resolve, reject) => {
-            socket.emit('consume', { rtpCapabilities }, resolve)
+            socket.emit('consume', { rtpCapabilities, producerSocketId }, resolve)
         })
     }
     catch (err) {
