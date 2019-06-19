@@ -37,21 +37,24 @@ io.on('connection', function (socket) {
   console.log('a user connected');
 
 
-  socket.on('JOIN', (data) => {
-    console.log(`JOIN: ${socket.id} joins ${data}`);
-    socket.join(data);
+  socket.on('JOIN', (room) => {
+    console.log(`JOIN: ${socket.id} joins ${room}`);
+    socket.join(room);
 
     //socketRoomMap[socket.id] = data;
-    if(typeof roomMembers[data] == 'undefined')
+    if(typeof roomMembers[room] == 'undefined')
     {
-      roomMembers[data] = [];
+      roomMembers[room] = {};
     }
     
-    roomMembers[data].push(socket.id);
-    roomOf[socket.id] = data
+    roomMembers[room][socket.id] = {
+      producing: false
+    };
+    roomOf[socket.id] = room
 
-    //socket.emit('MEMBERS', roomMembers[data]);
-    io.to(data).emit('MEMBERS', roomMembers[data]);
+
+    //socket.emit('MEMBERS', roomMembers[room]);
+    io.to(room).emit('MEMBERS', roomMembers[room]);
   });
 
   
@@ -83,7 +86,11 @@ io.on('connection', function (socket) {
 
     // inform clients about new producer
     //socket.broadcast.emit('newProducer');
-    io.to(roomOf[socket.id]).emit('NEWPRODUCER', socket.id);
+    //io.to(roomOf[socket.id]).emit('NEWPRODUCER', socket.id);
+
+    roomMembers[roomOf[socket.id]][socket.id].producing = true;
+
+    io.to(roomOf[socket.id]).emit('MEMBERS', roomMembers[roomOf[socket.id]]);
   });
 
   socket.on('createConsumerTransport', async (data, callback) => {

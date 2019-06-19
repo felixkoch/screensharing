@@ -33,20 +33,54 @@ socket.on('connect', () => {
 
     socket.emit('getRouterRtpCapabilities', null, loadDevice)
     console.log('nachemit');
-    
+
 });
 
+let members = {};
 socket.on('MEMBERS', (data) => {
     console.log("MEMBERS");
-    console.log(data);
+    for (var id in data) {
+        if (data.hasOwnProperty(id)) {
+            
+            if(typeof members[id] == 'undefined')
+            {
+                members[id] = data[id];
+                members[id].consumed = false;
+            }
+
+            members[id].producing = data[id].producing;
+
+            if(members[id].producing && !members[id].consumed)
+            {
+                members[id].consumed = true;
+                let videoElement = document.createElement('video');
+                videoElement.id = id;
+                videoElement.autoplay = true;
+                document.querySelector('#remoteVideos').appendChild(videoElement);
+                subscribe(id);
+            }
+
+        }
+    }
+
+    console.log(members);
 });
 
+document.querySelector('#remoteVideos').addEventListener('click', function(evt) {
+    // Do some check on target
+    if ( evt.target.classList.contains('some-class') ) {
+        // DO CODE
+    }
+}, true);
+
+/*
 let producerSocketId = null;
 socket.on('NEWPRODUCER', (data) => {
     console.log("NEWPRODUCER");
     console.log(data);
     producerSocketId = data;
 });
+*/
 
 function loadDevice(routerRtpCapabilities) {
     console.log('loadDevice');
@@ -159,8 +193,8 @@ async function startWebcam(transport) {
     return stream;
 }
 
-async function subscribe() {
-    console.log('subscribe for '+producerSocketId);
+async function subscribe(producerSocketId) {
+    console.log('subscribe for ' + producerSocketId);
     socket.emit('createConsumerTransport', {
         forceTcp: false,
         producerSocketId
@@ -169,7 +203,7 @@ async function subscribe() {
 }
 
 async function onConsumerTransport(data) {
-    console.log('onConsumerTransport for producerSocketId '+data.producerSocketId);
+    console.log('onConsumerTransport for producerSocketId ' + data.producerSocketId);
     const producerSocketId = data.producerSocketId
 
     const transport = device.createRecvTransport(data);
@@ -202,7 +236,8 @@ async function onConsumerTransport(data) {
             case 'connected':
                 console.log('connected');
                 console.log(1);
-                document.getElementById('remoteVideo').srcObject = stream;
+                console.log(document.getElementById(producerSocketId));
+                document.getElementById(producerSocketId).srcObject = stream;
                 console.log(2);
                 break;
 
