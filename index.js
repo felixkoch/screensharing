@@ -157,7 +157,7 @@ async function onProducerTransport(data) {
 
             case 'connected':
                 console.log(stream);
-                $('#localVideo').srcObject = stream;
+                //$('#localVideo').srcObject = stream;
                 break;
 
             case 'failed':
@@ -177,8 +177,8 @@ async function startWebcam(transport) {
     console.log('startWebcam')
 
     //let stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    //let stream = await navigator.mediaDevices.getDisplayMedia({
-    let stream = await navigator.mediaDevices.getUserMedia({
+    let stream = await navigator.mediaDevices.getDisplayMedia({
+    //let stream = await navigator.mediaDevices.getUserMedia({
         video: true,
     });
 
