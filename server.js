@@ -42,11 +42,10 @@ io.on('connection', function (socket) {
     socket.join(room);
 
     //socketRoomMap[socket.id] = data;
-    if(typeof roomMembers[room] == 'undefined')
-    {
+    if (typeof roomMembers[room] == 'undefined') {
       roomMembers[room] = {};
     }
-    
+
     roomMembers[room][socket.id] = {
       producing: false
     };
@@ -57,7 +56,13 @@ io.on('connection', function (socket) {
     io.to(room).emit('MEMBERS', roomMembers[room]);
   });
 
-  
+  setInterval(() => {
+    for (var room in roomMembers) {
+      console.log("MEMBERS to "+room)
+      io.to(room).emit('MEMBERS', roomMembers[room]);
+    }
+  }, 2500)
+
 
   socket.on('getRouterRtpCapabilities', (data, callback) => {
     console.log('getRouterRtpCapabilities');
@@ -65,7 +70,7 @@ io.on('connection', function (socket) {
   });
 
   socket.on('createProducerTransport', async (data, callback) => {
-    console.log('createProducerTransport '+socket.id);
+    console.log('createProducerTransport ' + socket.id);
     console.log(data)
     const { transport, params } = await createWebRtcTransport();
     producerTransports[socket.id] = transport;
@@ -73,14 +78,14 @@ io.on('connection', function (socket) {
   });
 
   socket.on('connectProducerTransport', async (data, callback) => {
-    console.log('connectProducerTransport '+socket.id);
+    console.log('connectProducerTransport ' + socket.id);
     await producerTransports[socket.id].connect({ dtlsParameters: data.dtlsParameters });
     callback();
   });
 
   socket.on('produce', async (data, callback) => {
-    console.log('produce '+socket.id);
-    const {kind, rtpParameters} = data;
+    console.log('produce ' + socket.id);
+    const { kind, rtpParameters } = data;
     producers[socket.id] = await producerTransports[socket.id].produce({ kind, rtpParameters });
     callback({ id: producers[socket.id].id });
 
@@ -94,11 +99,10 @@ io.on('connection', function (socket) {
   });
 
   socket.on('createConsumerTransport', async (data, callback) => {
-    console.log('createConsumerTransport for '+data.producerSocketId);
+    console.log('createConsumerTransport for ' + data.producerSocketId);
     const { transport, params } = await createWebRtcTransport();
 
-    if(typeof consumerTransports[socket.id] == 'undefined')
-    {
+    if (typeof consumerTransports[socket.id] == 'undefined') {
       consumerTransports[socket.id] = {}
     }
 
@@ -114,7 +118,7 @@ io.on('connection', function (socket) {
   });
 
   socket.on('consume', async (data, callback) => {
-    console.log('consume for '+data.producerSocketId);
+    console.log('consume for ' + data.producerSocketId);
     callback(await createConsumer(producers[data.producerSocketId], data.rtpCapabilities, socket.id, data.producerSocketId));
   });
 
@@ -167,14 +171,14 @@ async function runMediasoupWorker() {
       },
       */
       {
-        kind       : "video",
-        mimeType   : "video/H264",
-        clockRate  : 90000,
-        parameters :
+        kind: "video",
+        mimeType: "video/H264",
+        clockRate: 90000,
+        parameters:
         {
-          "packetization-mode"      : 1,
-          "profile-level-id"        : "42e01f",
-          "level-asymmetry-allowed" : 1
+          "packetization-mode": 1,
+          "profile-level-id": "42e01f",
+          "level-asymmetry-allowed": 1
         }
       },
     ];
@@ -182,15 +186,14 @@ async function runMediasoupWorker() {
 
 }
 
-async function createWebRtcTransport()
-{
+async function createWebRtcTransport() {
   console.log('createWebRtcTransport');
 
   const maxIncomingBitrate = 1500000;
   const initialAvailableOutgoingBitrate = 1000000;
 
   const transport = await mediasoupRouter.createWebRtcTransport({
-    listenIps: [{ip: '139.59.155.242', announcedIp: null}],
+    listenIps: [{ ip: '139.59.155.242', announcedIp: null }],
     enableUdp: true,
     enableTcp: true,
     preferUdp: true,
