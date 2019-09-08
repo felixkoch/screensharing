@@ -38,6 +38,12 @@ io.on('connection', function (socket) {
 
 
   socket.on('JOIN', (room) => {
+
+    if(room == "")
+    {
+      return
+    }
+
     console.log(`JOIN: ${socket.id} joins ${room}`);
     socket.join(room);
 
